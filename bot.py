@@ -1,5 +1,6 @@
 import os
 import requests
+import re
 from bs4 import BeautifulSoup
 from datetime import datetime
 
@@ -20,26 +21,29 @@ def get_page_text():
         "html.parser"
     )
 
-    return soup.get_text(
-        "\n"
-    )
+    return soup.get_text("\n")
 
 
 text = get_page_text()
 
 
-today = datetime.now().strftime(
-    "%Y-%m-%d"
-)
+today = datetime.now().strftime("%Y-%m-%d")
+
+
+# 找所有四位數字
+numbers = re.findall(r"\b\d{4}\b", text)
+
+
+passwords = "\n".join(numbers)
 
 
 message = f"""△Daily password
 
 日期：{today}
 
-網頁讀取測試：
+找到的四位數：
 
-{text[:1000]}
+{passwords}
 
 Hope every1 got red until u rest in peace
 """
