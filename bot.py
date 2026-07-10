@@ -1,20 +1,17 @@
 import requests
+from bs4 import BeautifulSoup
 
 URL = "https://www.playdeltaforce.com/events/hq/zh-tw/m/index.html"
 
-response = requests.get(URL)
-response.encoding = "utf-8"
+html = requests.get(URL).text
 
-html = response.text
+soup = BeautifulSoup(html, "html.parser")
 
 
-for word in ["password", "code", "零號大壩"]:
+scripts = soup.find_all("script")
 
-    print("\n==========", word, "==========")
+print("找到 JS 數量:", len(scripts))
 
-    index = html.find(word)
-
-    if index != -1:
-        print(html[index-500:index+500])
-    else:
-        print("找不到")
+for s in scripts:
+    if s.get("src"):
+        print(s.get("src"))
