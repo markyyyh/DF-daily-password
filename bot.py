@@ -1,42 +1,29 @@
-import os
 import requests
-from datetime import datetime
+
+URL = "https://www.playdeltaforce.com/events/hq/zh-tw/m/index.html"
+
+response = requests.get(URL)
+
+response.encoding = "utf-8"
+
+html = response.text
 
 
-WEBHOOK = os.getenv("DISCORD_WEBHOOK")
+print("HTML 長度：", len(html))
 
+# 找可能存資料的位置
+for word in [
+    "0213",
+    "0911",
+    "零號大壩",
+    "password",
+    "passwords",
+    "code",
+    "api"
+]:
+    print("\n搜尋：", word)
 
-today = datetime.now().strftime("%Y-%m-%d")
-
-
-passwords = {
-    "零號大壩": "0213",
-    "長弓溪谷": "0911",
-    "巴克什": "0341",
-    "航天基地": "0729",
-    "潮汐監獄": "0035",
-    "AZ3": "0510"
-}
-
-
-message = f"""△Daily password
-
-日期：{today}
-
-零號大壩：{passwords["零號大壩"]}
-長弓溪谷：{passwords["長弓溪谷"]}
-巴克什：{passwords["巴克什"]}
-航天基地：{passwords["航天基地"]}
-潮汐監獄：{passwords["潮汐監獄"]}
-AZ3：{passwords["AZ3"]}
-
-Hope every1 got red until u rest in peace
-"""
-
-
-requests.post(
-    WEBHOOK,
-    json={
-        "content": message
-    }
-)
+    if word in html:
+        print("找到！")
+    else:
+        print("沒有")
