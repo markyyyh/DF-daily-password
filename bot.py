@@ -1,24 +1,19 @@
 import requests
-
-js_url = "https://www.playdeltaforce.com/events/hq/m/js/index.js?v=1.5"
-
-js = requests.get(js_url).text
-
-print("JS長度:", len(js))
+from bs4 import BeautifulSoup
 
 
-for word in [
-    "operations-zero-dam",
-    "password",
-    "每日密码",
-    "password-box",
-    "layali"
-]:
-    print("\n搜尋:", word)
+URL = "https://www.playdeltaforce.com/events/hq/en/m/index.html"
 
-    index = js.find(word)
 
-    if index != -1:
-        print(js[index-300:index+500])
-    else:
-        print("沒有")
+html = requests.get(URL).text
+
+soup = BeautifulSoup(html, "html.parser")
+
+
+for span in soup.find_all("span"):
+    if span.get("data-info"):
+        print(
+            span.get("data-info"),
+            "=>",
+            span.text
+        )
