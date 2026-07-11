@@ -1,70 +1,47 @@
 import requests
 from bs4 import BeautifulSoup
+from urllib.parse import urljoin
 import time
 
 
 URL = "https://www.playdeltaforce.com/events/hq/en/m/index.html?t=" + str(int(time.time()))
 
+html = requests.get(
+    URL,
+    headers={
+        "User-Agent": "Mozilla/5.0"
+    }
+).text
 
-def get_passwords():
 
-    response = requests.get(
-        URL,
-        headers={
-            "Cache-Control": "no-cache",
-            "Pragma": "no-cache",
-            "User-Agent": "Mozilla/5.0"
-        }
-    )
+soup = BeautifulSoup(html, "html.parser")
 
-    response.encoding = "utf-8"
 
-    soup = BeautifulSoup(
-        response.text,
-        "html.parser"
-    )
+for script in soup.find_all("script"):
 
-    passwords = {}
+    src = script.get("src")
 
-    maps = [
-        "operations-zero-dam",
-        "operations-layali-grove",
-        "operations-layali-brakkesh",
-        "operations-layali-space-city",
-        "operations-layali-tide-prison",
-        "operations-layali-az3"
-    ]
+    if src:
 
-    for map_name in maps:
+        js_url = urljoin(URL, src)
 
-        result = soup.find(
-            "span",
-            {
-                "data-info": map_name
+        print("\nJS:", js_url)
+
+        js = requests.get(
+            js_url,
+            headers={
+                "User-Agent": "Mozilla/5.0"
             }
-        )
-
-        if result:
-            passwords[map_name] = result.text.strip()
-
-        else:
-            passwords[map_name] = "沒有"
+        ).text
 
 
-    return passwords
+        for word in [
+            "operations-zero-dam",
+            "setData",
+            "data-info",
+            "ajax",
+            "get"
+        ]:
 
-
-
-passwords = get_passwords()
-
-
-print("=== Daily Password Test ===")
-
-
-for name, password in passwords.items():
-
-    print(
-        name,
-        "=>",
-        password
-    )
+            if word in js:
+                print("找到:", word)
