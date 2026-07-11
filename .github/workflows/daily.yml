@@ -1,19 +1,16 @@
-name: Daily Password
+name: Delta Force Daily Password
 
 on:
+  schedule:
+    - cron: "0 1 * * *"
 
   workflow_dispatch:
 
-  schedule:
-    - cron: "0 0 * * *"
-
 
 jobs:
-
-  run:
+  run-bot:
 
     runs-on: ubuntu-latest
-
 
     steps:
 
@@ -27,14 +24,14 @@ jobs:
           python-version: "3.11"
 
 
-      - name: Install packages
+      - name: Install dependencies
         run: |
-          pip install requests beautifulsoup4
+          pip install requests playwright
+          playwright install chromium
 
 
       - name: Run bot
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-
         run: |
           python bot.py
