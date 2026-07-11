@@ -1,6 +1,10 @@
 import os
+import time
 import requests
+
 from bs4 import BeautifulSoup
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 from datetime import datetime
 
 
@@ -9,21 +13,31 @@ URL = "https://www.playdeltaforce.com/events/hq/zh-tw/m/index.html"
 WEBHOOK = os.getenv("DISCORD_WEBHOOK")
 
 
-def get_password(soup, info):
-    data = soup.find("span", {"data-info": info})
+# Selenium 設定
+options = Options()
+options.add_argument("--headless")
+options.add_argument("--no-sandbox")
+options.add_argument("--disable-dev-shm-usage")
+options.add_argument("--disable-gpu")
 
-    if data and data.text.strip():
-        return data.text.strip()
 
-    return "暫無"
+driver = webdriver.Chrome(options=options)
 
 
-# 抓網頁
-headers = {
-    "User-Agent": "Mozilla/5.0"
-}
+print("開啟網頁...")
 
-html = requests.get(URL, headers=headers).text
+driver.get(URL)
+
+
+# 等 JS 載入
+time.sleep(5)
+
+
+html = driver.page_source
+
+
+driver.quit()
+
 
 print("HTML長度:", len(html))
 
@@ -31,25 +45,66 @@ print("HTML長度:", len(html))
 soup = BeautifulSoup(html, "html.parser")
 
 
-# 取得密碼
+
+def get_password(info):
+
+    data = soup.find(
+        "span",
+        {
+            "data-info": info
+        }
+    )
+
+    if data:
+
+        value = data.text.strip()
+
+        if value:
+            return value
+
+
+    return "暫無"
+
+
+
 passwords = {
-    "零號大壩": get_password(soup, "operations-zero-dam"),
-    "長弓溪谷": get_password(soup, "operations-layali-grove"),
-    "巴克什": get_password(soup, "operations-layali-brakkesh"),
-    "航天基地": get_password(soup, "operations-layali-space-city"),
-    "潮汐監獄": get_password(soup, "operations-layali-tide-prison"),
-    "AZ3": get_password(soup, "operations-layali-az3"),
+
+    "零號大壩":
+        get_password("operations-zero-dam"),
+
+    "長弓溪谷":
+        get_password("operations-layali-grove"),
+
+    "巴克什":
+        get_password("operations-layali-brakkesh"),
+
+    "航天基地":
+        get_password("operations-layali-space-city"),
+
+    "潮汐監獄":
+        get_password("operations-layali-tide-prison"),
+
+    "AZ3":
+        get_password("operations-layali-az3")
+
 }
+
 
 
 print("=== PASSWORD ===")
 
-for k, v in passwords.items():
-    print(k, "=>", v)
+for name, code in passwords.items():
+
+    print(
+        name,
+        "=>",
+        code
+    )
 
 
 
 today = datetime.now().strftime("%Y-%m-%d")
+
 
 
 message = f"""△Daily password
@@ -66,21 +121,27 @@ AZ3：{passwords["AZ3"]}
 Hope every1 got red until u rest in peace"""
 
 
+
 print(message)
 
 
 
-# 傳 Discord
 if WEBHOOK:
 
-    response = requests.post(
+    r = requests.post(
         WEBHOOK,
         json={
             "content": message
         }
     )
 
-    print("Discord:", response.status_code)
+    print(
+        "Discord:",
+        r.status_code
+    )
 
 else:
-    print("沒有找到 DISCORD_WEBHOOK")
+
+    print(
+        "沒有 DISCORD_WEBHOOK"
+    )
