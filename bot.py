@@ -5,15 +5,42 @@ from bs4 import BeautifulSoup
 URL = "https://www.playdeltaforce.com/events/hq/en/m/index.html"
 
 
-html = requests.get(URL).text
+def get_passwords():
 
-soup = BeautifulSoup(html, "html.parser")
+    response = requests.get(URL)
+
+    response.encoding = "utf-8"
+
+    soup = BeautifulSoup(
+        response.text,
+        "html.parser"
+    )
+
+    result = {}
+
+    for span in soup.find_all("span"):
+
+        info = span.get("data-info")
+
+        if info and info.startswith("operations-"):
+
+            result[info] = span.text.strip()
 
 
-for span in soup.find_all("span"):
-    if span.get("data-info"):
-        print(
-            span.get("data-info"),
-            "=>",
-            span.text
-        )
+    return result
+
+
+
+passwords = get_passwords()
+
+
+print("=== Daily Password Test ===")
+
+
+for name, password in passwords.items():
+
+    print(
+        name,
+        "=>",
+        password
+    )
