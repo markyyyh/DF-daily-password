@@ -1,149 +1,89 @@
+import os
 import requests
-from bs4 import BeautifulSoup
-from urllib.parse import urljoin
+from datetime import datetime
+from playwright.sync_api import sync_playwright
 
 
-BASE = "https://www.playdeltaforce.com/events/hq/en/m/index.html"
+WEBHOOK = os.getenv("DISCORD_WEBHOOK")
 
-session = requests.Session()
-
-headers = {
-    "User-Agent": "Mozilla/5.0"
-}
+URL = "https://www.playdeltaforce.com/events/hq/zh-tw/m/index.html"
 
 
-print("========== HTML ==========")
+def get_password():
 
-html = session.get(BASE, headers=headers).text
+    result = {}
 
-print("HTML長度:", len(html))
+    with sync_playwright() as p:
 
+        browser = p.chromium.launch(
+            headless=True
+        )
 
-soup = BeautifulSoup(html, "html.parser")
+        page = browser.new_page()
 
-
-# ----------------------------
-# 找 data-info
-# ----------------------------
-
-print("\n========== DATA INFO ==========")
-
-for tag in soup.find_all(True):
-
-    info = tag.get("data-info")
-
-    if info and "operation" in info:
-        print(
-            tag.name,
-            info,
-            "=>",
-            tag.text.strip()
+        page.goto(
+            URL,
+            wait_until="networkidle"
         )
 
 
-# ----------------------------
-# 找圖片
-# ----------------------------
-
-print("\n========== IMAGES ==========")
-
-for img in soup.find_all("img"):
-
-    src = img.get("src")
-
-    if src:
-
-        if any(x in src.lower() for x in [
-            "password",
-            "guide",
-            "step",
-            "map"
-        ]):
-            print(src)
+        keys = {
+            "零號大壩": "operations-zero-dam",
+            "萊亞利叢林": "operations-layali-grove",
+            "布拉克什": "operations-layali-brakkesh",
+            "空城": "operations-layali-space-city",
+            "潮汐監獄": "operations-layali-tide-prison",
+            "AZ3": "operations-layali-az3"
+        }
 
 
-# ----------------------------
-# 找 onclick
-# ----------------------------
+        for name, key in keys.items():
 
-print("\n========== CLICK EVENTS ==========")
+            try:
+                value = page.locator(
+                    f'[data-info="{key}"]'
+                ).inner_text()
 
-for tag in soup.find_all(True):
-
-    for key,value in tag.attrs.items():
-
-        if "click" in key.lower():
-
-            print(
-                tag.name,
-                key,
-                value
-            )
+            except:
+                value = "無資料"
 
 
-# ----------------------------
-# 找所有 JS
-# ----------------------------
-
-print("\n========== JS FILES ==========")
-
-scripts=[]
-
-for script in soup.find_all("script"):
-
-    src=script.get("src")
-
-    if src:
-
-        scripts.append(urljoin(BASE,src))
+            result[name] = value
 
 
-print("JS數量:",len(scripts))
+        browser.close()
 
 
-# ----------------------------
-# 搜尋 JS
-# ----------------------------
-
-keywords=[
-    "operations-zero-dam",
-    "data-info",
-    "password-list",
-    "password",
-    "innerHTML",
-    ".text(",
-    "setData",
-    "ajax",
-    "fetch",
-    "XMLHttpRequest",
-    "axios"
-]
+    return result
 
 
-for js_url in scripts:
 
-    try:
-
-        js=session.get(js_url,headers=headers).text
-
-    except:
-
-        continue
+passwords = get_password()
 
 
-    print("\n================")
-    print(js_url)
-    print("長度:",len(js))
+today = datetime.now().strftime("%Y-%m-%d")
 
 
-    for word in keywords:
+message = f"""
+△ Daily Password
 
-        if word in js:
+日期：{today}
 
-            print("找到:",word)
+零號大壩：{passwords["零號大壩"]}
+長弓溪谷：{passwords["長弓溪谷"]}
+巴克什：{passwords["巴克什"]}
+航天基地：{passwords["航天基地"]}
+潮汐監獄：{passwords["潮汐監獄"]}
+AZ3：{passwords["AZ3"]}
+"""
 
-            index=js.find(word)
 
-            print(
-                js[index-200:index+500]
-            )
+print(message)
+
+
+requests.post(
+    WEBHOOK,
+    json={
+        "content": message
+    }
+)
