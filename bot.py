@@ -1,29 +1,70 @@
 import requests
+from bs4 import BeautifulSoup
+import time
 
 
-URL = "https://www.playdeltaforce.com/events/hq/en/m/index.html"
+URL = "https://www.playdeltaforce.com/events/hq/en/m/index.html?t=" + str(int(time.time()))
 
 
-html = requests.get(URL).text
+def get_passwords():
+
+    response = requests.get(
+        URL,
+        headers={
+            "Cache-Control": "no-cache",
+            "Pragma": "no-cache",
+            "User-Agent": "Mozilla/5.0"
+        }
+    )
+
+    response.encoding = "utf-8"
+
+    soup = BeautifulSoup(
+        response.text,
+        "html.parser"
+    )
+
+    passwords = {}
+
+    maps = [
+        "operations-zero-dam",
+        "operations-layali-grove",
+        "operations-layali-brakkesh",
+        "operations-layali-space-city",
+        "operations-layali-tide-prison",
+        "operations-layali-az3"
+    ]
+
+    for map_name in maps:
+
+        result = soup.find(
+            "span",
+            {
+                "data-info": map_name
+            }
+        )
+
+        if result:
+            passwords[map_name] = result.text.strip()
+
+        else:
+            passwords[map_name] = "沒有"
 
 
-print("HTML長度:", len(html))
+    return passwords
 
 
-for word in [
-    "2119",
-    "6905",
-    "operations-zero-dam",
-    "operations-layali-grove",
-    "Daily Password",
-    "password"
-]:
 
-    print("\n搜尋:", word)
+passwords = get_passwords()
 
-    i = html.find(word)
 
-    if i != -1:
-        print(html[i-300:i+500])
-    else:
-        print("沒有")
+print("=== Daily Password Test ===")
+
+
+for name, password in passwords.items():
+
+    print(
+        name,
+        "=>",
+        password
+    )
