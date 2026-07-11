@@ -1,46 +1,23 @@
 import requests
-from bs4 import BeautifulSoup
 
+url = "https://www.playdeltaforce.com/events/hq/assets/m/index.html-BT5wd2G1.js"
 
-URL = "https://www.playdeltaforce.com/events/hq/en/m/index.html"
+js = requests.get(url).text
 
+for word in [
+    "2119",
+    "6905",
+    "fetch",
+    "axios",
+    ".json",
+    "api",
+    "operations-zero-dam"
+]:
+    print("\n搜尋:", word)
 
-def get_passwords():
+    i = js.find(word)
 
-    response = requests.get(URL)
-
-    response.encoding = "utf-8"
-
-    soup = BeautifulSoup(
-        response.text,
-        "html.parser"
-    )
-
-    result = {}
-
-    for span in soup.find_all("span"):
-
-        info = span.get("data-info")
-
-        if info and info.startswith("operations-"):
-
-            result[info] = span.text.strip()
-
-
-    return result
-
-
-
-passwords = get_passwords()
-
-
-print("=== Daily Password Test ===")
-
-
-for name, password in passwords.items():
-
-    print(
-        name,
-        "=>",
-        password
-    )
+    if i != -1:
+        print(js[i-300:i+500])
+    else:
+        print("沒有")
