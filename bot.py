@@ -1,71 +1,58 @@
 import os
 import requests
+from bs4 import BeautifulSoup
 from datetime import datetime
-from playwright.sync_api import sync_playwright
 
-
-WEBHOOK = os.getenv("DISCORD_WEBHOOK")
 
 URL = "https://www.playdeltaforce.com/events/hq/zh-tw/m/index.html"
 
-
-def get_password():
-
-    result = {}
-
-    with sync_playwright() as p:
-
-        browser = p.chromium.launch(
-            headless=True
-        )
-
-        page = browser.new_page()
-
-        page.goto(
-            URL,
-            wait_until="networkidle"
-        )
+WEBHOOK = os.getenv("DISCORD_WEBHOOK")
 
 
-        keys = {
-            "零號大壩": "operations-zero-dam",
-            "萊亞利叢林": "operations-layali-grove",
-            "布拉克什": "operations-layali-brakkesh",
-            "空城": "operations-layali-space-city",
-            "潮汐監獄": "operations-layali-tide-prison",
-            "AZ3": "operations-layali-az3"
-        }
+def get_password(soup, info):
+    data = soup.find("span", {"data-info": info})
+
+    if data and data.text.strip():
+        return data.text.strip()
+
+    return "暫無"
 
 
-        for name, key in keys.items():
+# 抓網頁
+headers = {
+    "User-Agent": "Mozilla/5.0"
+}
 
-            try:
-                value = page.locator(
-                    f'[data-info="{key}"]'
-                ).inner_text()
+html = requests.get(URL, headers=headers).text
 
-            except:
-                value = "無資料"
-
-
-            result[name] = value
+print("HTML長度:", len(html))
 
 
-        browser.close()
+soup = BeautifulSoup(html, "html.parser")
 
 
-    return result
+# 取得密碼
+passwords = {
+    "零號大壩": get_password(soup, "operations-zero-dam"),
+    "長弓溪谷": get_password(soup, "operations-layali-grove"),
+    "巴克什": get_password(soup, "operations-layali-brakkesh"),
+    "航天基地": get_password(soup, "operations-layali-space-city"),
+    "潮汐監獄": get_password(soup, "operations-layali-tide-prison"),
+    "AZ3": get_password(soup, "operations-layali-az3"),
+}
 
 
+print("=== PASSWORD ===")
 
-passwords = get_password()
+for k, v in passwords.items():
+    print(k, "=>", v)
+
 
 
 today = datetime.now().strftime("%Y-%m-%d")
 
 
-message = f"""
-△ Daily Password
+message = f"""△Daily password
 
 日期：{today}
 
@@ -75,15 +62,25 @@ message = f"""
 航天基地：{passwords["航天基地"]}
 潮汐監獄：{passwords["潮汐監獄"]}
 AZ3：{passwords["AZ3"]}
-"""
+
+Hope every1 got red until u rest in peace"""
 
 
 print(message)
 
 
-requests.post(
-    WEBHOOK,
-    json={
-        "content": message
-    }
-)
+
+# 傳 Discord
+if WEBHOOK:
+
+    response = requests.post(
+        WEBHOOK,
+        json={
+            "content": message
+        }
+    )
+
+    print("Discord:", response.status_code)
+
+else:
+    print("沒有找到 DISCORD_WEBHOOK")
