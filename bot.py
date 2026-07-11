@@ -1,48 +1,43 @@
 import requests
+from bs4 import BeautifulSoup
+
+url = "https://www.playdeltaforce.com/events/hq/en/m/index.html"
+
+html = requests.get(url).text
+
+print("HTML長度:", len(html))
+
+soup = BeautifulSoup(html, "html.parser")
 
 
-base = "https://www.playdeltaforce.com/events/hq/assets/m/"
+# 找所有 button
+print("\n=== BUTTON ===")
+for b in soup.find_all("button"):
+    print(b)
+    
+
+# 找所有可能按鈕 class
+print("\n=== CLASS含btn/button ===")
+for tag in soup.find_all(True):
+    cls = tag.get("class")
+
+    if cls:
+        text = " ".join(cls).lower()
+
+        if "btn" in text or "button" in text:
+            print(tag.name, cls, tag.text.strip())
 
 
-files = [
-    "wand-Dnsle5-v.js",
-    "main-DYD4Ogaa.js",
-    "keywords-BY-fuJl3.js",
-    "convert-DkzLyfDU.js",
-    "timeServerPlugin-6YcmO4yg.js"
-]
+# 找所有包含密碼相關字的附近
+print("\n=== password附近 ===")
 
+for word in ["password", "code", "operations-zero-dam"]:
 
-words = [
-    "6905",
-    "2119",
-    "operations-zero-dam",
-    "password",
-    "daily",
-    "api",
-    "fetch",
-    "axios",
-    "request"
-]
+    index = html.lower().find(word.lower())
 
+    print("\n搜尋:", word)
 
-for file in files:
-
-    url = base + file
-
-    js = requests.get(url).text
-
-    print("\n================")
-    print(file)
-    print("長度:", len(js))
-
-
-    for word in words:
-
-        if word.lower() in js.lower():
-
-            print("找到:", word)
-
-            i = js.lower().find(word.lower())
-
-            print(js[i-300:i+500])
+    if index != -1:
+        print(html[index-300:index+500])
+    else:
+        print("沒有")
