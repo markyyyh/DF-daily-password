@@ -118,7 +118,7 @@ message = f"""△Daily password
 潮汐監獄：{passwords["潮汐監獄"]}
 AZ3：{passwords["AZ3"]}
 
-Hope every1 got red until u rest in peace"""
+Hope every1 got red before u rest in peace"""
 
 
 
