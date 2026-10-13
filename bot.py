@@ -118,7 +118,8 @@ message = f"""△Daily password
 潮汐監獄：{passwords["潮汐監獄"]}
 AZ3：{passwords["AZ3"]}
 
-Hope every1 got HOAs before u evacuationed """
+Hope every1 got HOAs before u evacuationed
+tip:HOA=Heart Of Africa """
 
 
 
